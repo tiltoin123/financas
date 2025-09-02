@@ -1,0 +1,20 @@
+# Composer
+/vendor/
+/composer.lock
+
+# Logs e cache
+*.log
+*.cache
+*.tmp
+
+# Config local
+.env
+
+# Diretórios de IDE
+/.idea/
+/.vscode/
+/nbproject/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
