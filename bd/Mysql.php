@@ -1,5 +1,5 @@
 <?php
-namespace bd;
+namespace db;
 
 use Exception;
 use mysqli;
