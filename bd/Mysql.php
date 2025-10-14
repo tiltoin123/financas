@@ -5,32 +5,46 @@ namespace db;
 use Exception;
 use mysqli;
 
-require_once '../env.php';
+require_once '../utils/env.php';
+load_env(__DIR__ . '/../');
+
 
 class Mysql
 {
 
-    const ERR_DUPLICIDADE       = 1062;
-    const ERR_CHAVE_ESTRANGEIRA = 1451;
+    const int ERR_DUPLICIDADE       = 1062;
+    const int ERR_CHAVE_ESTRANGEIRA = 1451;
 
-    const HOST = $_ENV['DB_HOST'];
-    const PORT = $_ENV['DB_PORT'];
-    const BASE   = $_ENV['DB_DATABASE'];
-    const USERNAME = $_ENV['DB_USERNAME'];
-    const PASSWORD = $_ENV['DB_PASSWORD'];
+    private static string $HOST;
+    private static string $PORT;
+    private static string $BASE;
+    private static string $USERNAME;
+    private static string $PASSWORD;
+
+    public static function getValues(): void
+    {
+        self::$HOST = $_ENV['DB_HOST'];
+        self::$PORT = $_ENV['DB_PORT'];
+        self::$BASE = $_ENV['DB_DATABASE'];
+        self::$USERNAME = $_ENV['DB_USERNAME'];
+        self::$PASSWORD = $_ENV['DB_PASSWORD'];
+    }
 
 
-    public static function connection($dataSource = null): mysqli
+    /**
+     * @throws Exception
+     */
+    public static function connection(): mysqli
     {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
+        self::getValues();
         try {
             $conn = new mysqli(
-                self::HOST,
-                self::USERNAME,
-                self::PASSWORD,
-                self::BASE,
-                self::PORT
+                self::$HOST,
+                self::$USERNAME,
+                self::$PASSWORD,
+                self::$BASE,
+                self::$PORT
             );
 
             $conn->set_charset("utf8mb4");
