@@ -1,13 +1,12 @@
 <?php
-// public/index.php
-
-// 1. Importa o arquivo da classe manualmente
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once __DIR__ . '/../core/Autoloader.php';
 
-// 2. Chama o método register para "ligar" o motor
-// Passamos o prefixo 'App\\' e o caminho da pasta onde as classes estão
-App\Core\Autoloader::register('App\\', __DIR__ . '/../src/');
+App\Core\Autoloader::register('App\\', __DIR__ . '/../');
 
-// 3. Agora o PHP já sabe onde as coisas estão.
-// Você já pode chamar o Bootstrap e o Router sem dar erro de "Class not found"
 require_once __DIR__ . '/../core/bootstrap.php';
+use App\Core\Http\Router;
+$router = new Router();
+$router->run();

@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Define a base relativa para este projeto específico
+RewriteBase /financas/public/
+
+# Se não for um arquivo ou pasta real, manda para o index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
