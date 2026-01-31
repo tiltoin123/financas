@@ -7,6 +7,8 @@ require_once __DIR__ . '/../core/Autoloader.php';
 App\Core\Autoloader::register('App\\', __DIR__ . '/../');
 
 require_once __DIR__ . '/../core/bootstrap.php';
+
 use App\Core\Http\Router;
+
 $router = new Router();
 $router->run();

@@ -2,29 +2,42 @@
 
 namespace App\Core;
 
-class Autoloader {
+class Autoloader
+{
     private string $prefix;
     private string $baseDir;
 
-    public function __construct(string $prefix, string $baseDir) {
+    public function __construct(string $prefix, string $baseDir)
+    {
         $this->prefix = $prefix;
         $this->baseDir = $baseDir;
     }
 
-    public static function register(string $prefix, string $baseDir): void {
+    public static function register(string $prefix, string $baseDir): void
+    {
         $loader = new self($prefix, $baseDir);
 
         spl_autoload_register([$loader, 'load']);
     }
 
-    private function load(string $class): void {
+    private function load(string $class): void
+    {
         $len = strlen($this->prefix);
         if (strncmp($this->prefix, $class, $len) !== 0) {
             return;
         }
 
         $relativeClass = substr($class, $len);
-        $file = $this->baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+        $path = str_replace('\\', '/', $relativeClass);
+
+        if (strpos($path, 'Core/') === 0) {
+            $folder = 'core/';
+            $path = str_replace('Core/', '', $path);
+        } else {
+            $folder = 'app/';
+        }
+
+        $file = rtrim($this->baseDir, '/') . '/' . $folder . $path . '.php';
 
         if (file_exists($file)) {
             require $file;

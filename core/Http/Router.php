@@ -2,46 +2,36 @@
 
 namespace App\Core\Http;
 
-// Importamos o Request que acabámos de criar
+use App\Core\Http\Request;
 
-class Router {
-    public function run(): void
+class Router
+{
+    public function run()
     {
-        // 1. Pega a URL atual (ex: 'contato' ou 'usuario/perfil')
         $uri = Request::uri();
 
-        // 2. Se a URL estiver vazia (raiz do site), define como 'home'
-        if ($uri === '' || $uri === 'index.php') {
+        // 1. Se a URI vier vazia (raiz), define como 'home'
+        if (empty($uri)) {
             $uri = 'home';
         }
 
-        // 3. Transforma a URI no nome do Controller (ex: 'contato' -> 'ContatoController')
-        // ucfirst coloca a primeira letra em maiúscula (regra da PSR-4 que vimos!)
-        $controllerName = ucfirst($uri) . 'Controller';
+        // 2. TRATAMENTO DO ERRO: 
+        // Pegamos apenas a última parte da URI (caso venha financas/home)
+        // E forçamos a primeira letra a ser Maiúscula (home -> Home)
+        $parts = explode('/', $uri);
+        $controllerBase = ucfirst(end($parts));
 
-        // 4. Define o caminho completo do ficheiro na pasta app/Controllers
-        $file = BASE_PATH . 'app' . DS . 'Controllers' . DS . $controllerName . '.php';
+        $controllerName = $controllerBase . 'Controller';
+        $controllerClass = "\\App\\Controllers\\" . $controllerName;
 
-        // 5. Verifica se o ficheiro existe fisicamente
+        // 3. Verifica se o arquivo físico existe antes de instanciar
+        $file = __DIR__ . "/../../app/Controllers/{$controllerName}.php";
+
         if (file_exists($file)) {
-            // Se existir, instanciamos a classe usando o Namespace
-            $className = "\\App\\Controllers\\" . $controllerName;
-
-            // O Autoloader vai carregar o ficheiro automaticamente aqui!
-            $controller = new $className();
-
-            // Executamos o método padrão (index)
-            if (method_exists($controller, 'index')) {
-                $controller->index();
-            } else {
-                http_response_code(500);
-                echo "Erro: O método index não existe no $controllerName.";
-            }
+            $controller = new $controllerClass();
+            $controller->index();
         } else {
-            // Se não achar o ficheiro, manda um 404
-            http_response_code(404);
-            echo "<h1>404 - Página não encontrada</h1>";
-            echo "O controller <b>$controllerName</b> não foi encontrado em app/Controllers.";
+            die("404 - O controller {$controllerName} não foi encontrado em app/Controllers.");
         }
     }
 }
