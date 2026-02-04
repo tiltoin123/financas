@@ -4,29 +4,32 @@ namespace App\Core\Http;
 
 class Response {
     /**
-     * Renderiza uma view (arquivo HTML/PHP)
-     * * @param string $view Nome do arquivo dentro de app/Views/ (sem .php)
-     * @param array $data Dados que serão passados para a tela
+     * * @param string $view
+     * @param array $data
      */
-    public static function view(string $view, array $data = []) {
-        // 1. Caminho do arquivo da view
-        $file = BASE_PATH . 'app' . DS . 'Views' . DS . $view . '.php';
+    public static function view(string $view, array $data = []): void {
+        extract($data);
 
-        if (file_exists($file)) {
-            // 2. Transforma ['nome' => 'Pedro'] em $nome = 'Pedro'
-            extract($data);
+        $viewFile = __DIR__ . "/../../app/Views/{$view}.php";
 
-            // 3. Inclui o arquivo que agora tem acesso às variáveis acima
-            require_once $file;
+        if (!file_exists($viewFile)) {
+            die("Erro: O arquivo da página não foi encontrado em: {$viewFile}");
+        }
+
+        ob_start();
+        require_once $viewFile;
+        $content = ob_get_clean();
+        $layoutFile = __DIR__ . "/../../../app/Views/partials/layout.php";
+
+        if (file_exists($layoutFile)) {
+            require_once $layoutFile;
         } else {
-            die("Erro: A view <b>$view</b> não foi encontrada em app/Views/");
+            echo $content;
         }
     }
 
-    /**
-     * Retorna um JSON (útil para APIs no seu TCC)
-     */
-    public static function json(array $data, int $status = 200) {
+    public static function json(array $data, int $status = 200): void
+    {
         header('Content-Type: application/json');
         http_response_code($status);
         echo json_encode($data);
