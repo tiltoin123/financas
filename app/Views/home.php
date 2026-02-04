@@ -7,8 +7,13 @@
 </head>
 
 <body>
-    <h1>Página Inicial do Projeto Finanças</h1>
-    <p>Se você está vendo isso, o Framework está funcionando no Apache!</p>
+<h1>Página Inicial do Projeto Finanças</h1>
+<p>Se você está vendo isso, o Framework está funcionando no Apache!</p>
+<?php
+$db = \App\Core\Db\Db::con();
+$version = $db->query('SELECT VERSION()')->fetchColumn();
+?>
+<div><?= $version ?></div>
 </body>
 
 </html>
