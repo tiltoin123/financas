@@ -2,15 +2,13 @@
 
 namespace App\Core;
 
-class Config {
+class Config
+{
     protected static array $data = [];
 
-    /**
-     * O nome que você escolheu: carrega o arquivo .env para a memória
-     */
-    public static function loadDotEnv(string $path): void {
+    public static function loadDotEnv(string $path): void
+    {
         if (!file_exists($path)) {
-            // No TCC, você pode até lançar uma Exception aqui se for obrigatório
             return;
         }
 
@@ -27,7 +25,6 @@ class Config {
 
                 self::$data[$name] = $value;
 
-                // Alimenta as globais do PHP para compatibilidade
                 putenv("{$name}={$value}");
                 $_ENV[$name] = $value;
                 $_SERVER[$name] = $value;
@@ -35,10 +32,8 @@ class Config {
         }
     }
 
-    /**
-     * Para você pegar os valores de forma limpa
-     */
-    public static function get(string $key, $default = null) {
+    public static function get(string $key, $default = null)
+    {
         return self::$data[$key] ?? $default;
     }
 }
