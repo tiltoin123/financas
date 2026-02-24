@@ -28,19 +28,20 @@ class Autoloader
         }
 
         $relativeClass = substr($class, $len);
+
         $path = str_replace('\\', '/', $relativeClass);
 
-        if (strpos($path, 'Core/') === 0) {
-            $folder = 'core/';
-            $path = str_replace('Core/', '', $path);
-        } else {
-            $folder = 'app/';
+        $folder = (str_starts_with($path, 'Core/')) ? 'core/' : 'app/';
+
+        if ($folder === 'core/') {
+            $path = substr($path, 5);
         }
 
         $file = rtrim($this->baseDir, '/') . '/' . $folder . $path . '.php';
 
         if (file_exists($file)) {
             require $file;
+        } else {
         }
     }
 }

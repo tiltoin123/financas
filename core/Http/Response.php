@@ -2,12 +2,14 @@
 
 namespace App\Core\Http;
 
-class Response {
+class Response
+{
     /**
      * * @param string $view
      * @param array $data
      */
-    public static function view(string $view, array $data = []): void {
+    public static function view(string $view, array $data = []): void
+    {
         extract($data);
 
         $viewFile = __DIR__ . "/../../app/Views/{$view}.php";
@@ -33,6 +35,17 @@ class Response {
         header('Content-Type: application/json');
         http_response_code($status);
         echo json_encode($data);
+        exit;
+    }
+
+    public static function redirect(string $url): void
+    {
+        $scriptName = $_SERVER['SCRIPT_NAME'];
+        $baseDir = str_replace('/public/index.php', '', $scriptName);
+
+        $url = '/' . ltrim($url, '/');
+
+        header("Location: " . $baseDir . $url);
         exit;
     }
 }

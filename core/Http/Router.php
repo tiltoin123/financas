@@ -2,31 +2,71 @@
 
 namespace App\Core\Http;
 
-use App\Core\Http\Request;
-
 class Router
 {
-    public function run()
+    public function run(): void
     {
-        $uri = Request::uri();
+        // 1. Lógica de URL (Igual a sua, que está correta)
+        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $scriptName = $_SERVER['SCRIPT_NAME'];
 
-        if (empty($uri)) {
-            $uri = 'home';
+        $uriParts = explode('/', trim($uri, '/'));
+        $scriptParts = explode('/', trim(dirname($scriptName), '/'));
+
+        // Remove a pasta base (financas) da URI
+        foreach ($scriptParts as $part) {
+            if (!empty($uriParts) && $uriParts[0] === $part) {
+                array_shift($uriParts);
+            }
         }
 
-        $parts = explode('/', $uri);
-        $controllerBase = ucfirst(end($parts));
+        // 2. Define Módulo e Controller
+        $module = !empty($uriParts) ? ucfirst($uriParts[0]) : 'Home';
+        $controllerName = $module . 'Controller';
 
-        $controllerName = $controllerBase . 'Controller';
-        $controllerClass = "\\App\\Controllers\\" . $controllerName;
+        // --- A MUDANÇA ESTÁ AQUI ---
 
-        $file = __DIR__ . "/../../app/Controllers/{$controllerName}.php";
+        // Em vez de rezar para o Autoloader achar, montamos o caminho físico
+        // Assumindo que a pasta "app" é minúscula e "Modules" maiúscula (padrão Linux/PSR)
+        // Se sua pasta raiz for "App" (maiúsculo), troque abaixo.
+        $baseFolder = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 
-        if (file_exists($file)) {
-            $controller = new $controllerClass();
-            $controller->index();
+        // 2. Monta o caminho físico absoluto usando o DOCUMENT_ROOT
+        // DOCUMENT_ROOT costuma ser C:/wamp/Apache24/htdocs
+        $rootPath = rtrim($_SERVER['DOCUMENT_ROOT'], '/');
+
+        // 3. O caminho completo do arquivo agora leva em conta a pasta do projeto
+        $controllerFile = $rootPath . $baseFolder . "/app/Modules/{$module}/{$controllerName}.php";
+
+        // Limpeza final de barras
+        $controllerFile = str_replace(['//', '\\'], ['/', '/'], $controllerFile);
+
+        if (file_exists($controllerFile)) {
+            require_once $controllerFile; // <--- O Pulo do gato: Carrega o arquivo na força bruta
+
+            // Agora a classe existe na memória, podemos instanciar com o namespace completo
+            $controllerClass = "App\\Modules\\{$module}\\{$controllerName}";
+
+            if (class_exists($controllerClass)) {
+                $controller = new $controllerClass();
+
+                // Lógica de método (mantida)
+                $method = isset($uriParts[1]) && !empty($uriParts[1]) ? $uriParts[1] : 'index';
+
+                if (method_exists($controller, $method)) {
+                    $params = array_slice($uriParts, 2);
+                    call_user_func_array([$controller, $method], $params);
+                } else {
+                    echo "Método <b>{$method}</b> não encontrado na classe {$controllerClass}.";
+                }
+            } else {
+                echo "Arquivo encontrado, mas a classe <b>{$controllerClass}</b> não foi definida corretamente dentro dele (verifique o namespace).";
+            }
         } else {
-            die("404 - O controller {$controllerName} não foi encontrado em app/Controllers.");
+            http_response_code(404);
+            echo "<h1>Erro 404</h1>";
+            echo "Arquivo do Controller não encontrado.<br>";
+            echo "Caminho tentado: <code>{$controllerFile}</code>";
         }
     }
 }
