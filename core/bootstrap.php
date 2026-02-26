@@ -1,28 +1,42 @@
 <?php
 
-const DS = DIRECTORY_SEPARATOR;
-define('BASE_PATH', dirname(__DIR__) . DS);
-const APP_PATH = BASE_PATH . 'app' . DS;
-const CORE_PATH = BASE_PATH . 'core' . DS;
+declare(strict_types=1);
 
-App\Core\Config::loadDotEnv(BASE_PATH . '.env');
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
 
-if (App\Core\Config::get('APP_DEBUG') === 'true') {
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-} else {
-    ini_set('display_errors', 0);
-    ini_set('display_startup_errors', 0);
-    error_reporting(0);
-}
+// ===== RAIZ FÍSICA (sempre pelo PHP) =====
+define(
+    'RAIZ',
+    rtrim(str_replace('\\', '/', dirname(__DIR__)), '/') . '/'
+);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// ===== ENV =====
+require RAIZ . 'core/Config.php';
+\App\Core\Config::loadDotEnv(RAIZ . '.env');
 
-date_default_timezone_set(App\Core\Config::get('APP_TIMEZONE', 'America/Sao_Paulo'));
+// ===== CONSTANTES =====
+define('APP', \App\Core\Config::get('APP_NAME', 'app'));
+define('APP_ENV', \App\Core\Config::get('APP_ENV', 'production'));
+define('DEV', APP_ENV !== 'prod');
 
-if (file_exists(CORE_PATH . 'Functions.php')) {
-    require_once CORE_PATH . 'Functions.php';
+// ===== AUTOLOADER =====
+require RAIZ . 'core/Autoloader.php';
+\App\Core\Autoloader::register('App\\', RAIZ);
+
+// ===== URL BASE =====
+define('SITE', \App\Core\Config::get('APP_URL', ''));
+
+// ===== SISTEMA =====
+
+// ===== SESSÃO =====
+session_name(APP);
+session_start();
+
+// ===== INFRA =====
+// Auth::ini();
+
+// ===== HEADERS DEV =====
+if (DEV) {
+    header('X-App-Env: ' . APP_ENV);
 }

@@ -9,6 +9,9 @@ class Autoloader
 
     public function __construct(string $prefix, string $baseDir)
     {
+        if (!is_dir($baseDir)) {
+            throw new \RuntimeException('BaseDir inválido');
+        }
         $this->prefix = $prefix;
         $this->baseDir = $baseDir;
     }
@@ -41,7 +44,6 @@ class Autoloader
 
         if (file_exists($file)) {
             require $file;
-        } else {
         }
     }
 }
