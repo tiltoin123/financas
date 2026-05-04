@@ -7,35 +7,51 @@ use App\Core\Db;
 class Usuario
 {
 
-    public static function salvar(string $nome, string $email, string $senha): bool
+    public ?int $id;
+    private string $nome;
+    private string $email;
+    private string $senha;
+
+    public function __construct(?int $id, string $nome, string $email, string $senha)
     {
-        $db = Db::con();
-
-        $senhaHash = password_hash($senha, PASSWORD_BCRYPT, ['cost' => 12]);
-
-        $sql = "INSERT INTO usuarios (nome, email, senha) VALUES (:nome, :email, :senha)";
-        $stmt = $db->prepare($sql);
-
-        return $stmt->execute([
-            ':nome'  => $nome,
-            ':email' => $email,
-            ':senha' => $senhaHash
-        ]);
+        $this->id = $id;
+        $this->setNome($nome);
+        $this->setEmail($email);
+        $this->senha = $senha;
     }
 
-    public static function autenticar(string $email, string $senha)
+    public function setNome(string $nome): void
     {
-        $db = Db::con();
+        // remove espaços nas pontas
+        $nome = trim($nome);
 
-        $sql = "SELECT * FROM usuarios WHERE email = :email LIMIT 1";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([':email' => $email]);
-        $usuario = $stmt->fetch();
-
-        if ($usuario && password_verify($senha, $usuario->senha)) {
-            return $usuario;
+        // valida (letras + acentos + espaço)
+        if (!preg_match('/^[a-zA-ZÀ-ÿ\s]+$/u', $nome)) {
+            throw new \InvalidArgumentException("Nome inválido");
         }
 
-        return false;
+        $this->nome = $nome;
+    }
+
+    public function getNome(): string
+    {
+        return $this->nome;
+    }
+
+    public function setEmail(string $email): void
+    {
+        $email = trim($email);
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException("Email inválido");
+        }
+
+        // opcional: normalizar
+        $this->email = strtolower($email);
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
     }
 }
