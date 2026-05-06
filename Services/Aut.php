@@ -4,7 +4,7 @@ namespace Services;
 
 use Models\Usuario;
 
-class Auth
+class Aut
 {
     public static function login(string $email, string $senha): bool
     {
