@@ -6,15 +6,21 @@
 </head>
 <body>
 
-<form id="login-form">
-    <label>
+<div id="login-form">
+    <label for="email">
+        Email
         <input id="email" type="text" name="email">
     </label>
-    <label>
+    <label for="senha">
+        Senha
         <input id="senha" type="password" name="senha">
     </label>
     <button id="entrar" type="button">Entrar</button>
-</form>
+    <div id="cadastro">
+        <p>Ainda não tem conta?</p>
+        <button id="cadastrar" type="button">Cadastre-se</button>
+    </div>
+</div>
 
 <script src="./index.js"></script>
 
