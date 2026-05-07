@@ -19,7 +19,7 @@
             <input id="senha" type="password" name="senha">
         </label>
     </div>
-    <button id="entrar" type="button">Entrar</button>
+    <button id="logar" type="button">Entrar</button>
     <div id="cadastro">
         <p>Ainda não tem conta?</p>
         <button id="cadastrar" type="button">Cadastre-se</button>

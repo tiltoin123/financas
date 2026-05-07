@@ -42,9 +42,18 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    text-align: center;
 }
 
-.campo label{
+.campo label {
     display: flex;
     flex-direction: column;
+}
+
+.campo {
+    margin: 0.25rem;
+}
+
+#login-form button:hover {
+    background: #e8e8e8;
 }
