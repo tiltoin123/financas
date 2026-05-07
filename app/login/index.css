@@ -44,7 +44,7 @@ body {
     width: 100%;
 }
 
-.campo{
+.campo label{
     display: flex;
     flex-direction: column;
 }
