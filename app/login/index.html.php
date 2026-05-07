@@ -7,14 +7,18 @@
 <body>
 
 <div id="login-form">
-    <label for="email">
-        Email
-        <input id="email" type="text" name="email">
-    </label>
-    <label for="senha">
-        Senha
-        <input id="senha" type="password" name="senha">
-    </label>
+    <div class="campo">
+        <label for="email">
+            Email
+            <input id="email" type="text" name="email">
+        </label>
+    </div>
+    <div class="campo">
+        <label for="senha">
+            Senha
+            <input id="senha" type="password" name="senha">
+        </label>
+    </div>
     <button id="entrar" type="button">Entrar</button>
     <div id="cadastro">
         <p>Ainda não tem conta?</p>

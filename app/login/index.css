@@ -20,7 +20,7 @@ body {
     background: white;
     border-radius: 8px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin: 15% auto;
 }
@@ -42,4 +42,9 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+}
+
+.campo{
+    display: flex;
+    flex-direction: column;
 }
