@@ -50,7 +50,7 @@ body {
     flex-direction: column;
 }
 
-.campo {
+.campo,button {
     margin: 0.25rem;
 }
 
