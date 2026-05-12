@@ -1,7 +1,7 @@
 const loga = async () => {
 
-  const email = document.querySelector('#email').value.trim()
-  const senha = document.querySelector('#senha').value.trim()
+  const email = document.querySelector('#email')?.value
+  const senha = document.querySelector('#senha')?.value
 
   if (!email || !senha) {
     alert('Preencha todos os campos')

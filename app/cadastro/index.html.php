@@ -6,11 +6,17 @@
 </head>
 <body>
 
-<div id="login-form">
+<div id="cadastro-form">
+    <div class="campo">
+        <label for="nome">
+            Nome
+            <input id="nome" type="text" name="nome">
+        </label>
+    </div>
     <div class="campo">
         <label for="email">
             Email
-            <input id="email" type="text" name="email">
+            <input id="email" type="email" name="email">
         </label>
     </div>
     <div class="campo">
@@ -19,11 +25,13 @@
             <input id="senha" type="password" name="senha">
         </label>
     </div>
-    <button id="logar" type="button">Entrar</button>
-    <div id="cadastro">
-        <p>Ainda não tem conta?</p>
-        <button id="cadastrar" type="button">Cadastre-se</button>
+    <div class="campo">
+        <label for="repetir-senha">
+            Repetir Senha
+            <input id="repetir-senha" type="password" name="repetir-senha">
+        </label>
     </div>
+    <button id="cadastrar" type="button">Cadastrar</button>
 </div>
 
 <script src="./index.js"></script>

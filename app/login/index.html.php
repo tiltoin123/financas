@@ -10,7 +10,7 @@
     <div class="campo">
         <label for="email">
             Email
-            <input id="email" type="text" name="email">
+            <input id="email" type="email" name="email">
         </label>
     </div>
     <div class="campo">
@@ -22,7 +22,7 @@
     <button id="logar" type="button">Entrar</button>
     <div id="cadastro">
         <p>Ainda não tem conta?</p>
-        <button id="cadastrar" type="button">Cadastre-se</button>
+        <a id="cadastrar" href="../cadastro/index.php">Cadastre-se</a>
     </div>
 </div>
 

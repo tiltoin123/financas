@@ -1,20 +1,28 @@
-const loga = async () => {
-  const email = document.getElementById('email').value.trim()
-  const senha = document.getElementById('senha').value.trim()
+const cadastra = async () => {
+  const nome = document.querySelector('#nome')?.value
+  const email = document.querySelector('#email')?.value
+  const senha = document.querySelector('#senha')?.value
+  const repetirSenha = document.querySelector('#repetir-senha')?.value
 
-  if (!email || !senha) {
+  if (!nome || !email || !senha || !repetirSenha) {
     alert('Preencha todos os campos')
+    return
+  }
+
+  if (document.querySelector('#senha').value !== document.querySelector('#repetir-senha').value) {
+    alert('As senhas devem ser iguais')
     return
   }
 
   try {
 
-    const response = await fetch('login.php', {
+    const response = await fetch('cadastra.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        nome: nome,
         email: email,
         senha: senha
       })
@@ -30,4 +38,4 @@ const loga = async () => {
   }
 }
 
-document.querySelector('#logar').addEventListener('click', loga)
+document.querySelector('#cadastrar').addEventListener('click', cadastra)

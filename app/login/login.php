@@ -5,18 +5,22 @@ use Services\Aut;
 require_once "../../core/bootstrap.php";
 
 try {
-
-    if (!$_POST['email'] || !$_POST['senha']) {
-        throw new Exception('Preencha todos os campos!');
-    }
-
     $ret['success'] = false;
-    $ret['message'] = 'Usuário ou senha incorretos.';
+    if (!Aut::check()) {
 
-    $logado = Aut::login($_POST['email'], $_POST['senha']);
+        if (!$_POST['email'] || !$_POST['senha']) {
+            throw new Exception('Preencha todos os campos!');
+        }
 
-    if ($logado) {
-        $ret['success'] = true;
+        $ret['message'] = 'Usuário ou senha incorretos.';
+
+        $logado = Aut::login($_POST['email'], $_POST['senha']);
+
+        if ($logado) {
+            $ret['success'] = true;
+        }
+    } else {
+        $ret['message'] = 'Usuário já está logado.';
     }
 
 } catch (Throwable $e) {
