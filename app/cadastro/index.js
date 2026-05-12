@@ -1,7 +1,6 @@
 const loga = async () => {
-
-  const email = document.querySelector('#email').value.trim()
-  const senha = document.querySelector('#senha').value.trim()
+  const email = document.getElementById('email').value.trim()
+  const senha = document.getElementById('senha').value.trim()
 
   if (!email || !senha) {
     alert('Preencha todos os campos')
@@ -16,23 +15,18 @@ const loga = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        email,
-        senha
+        email: email,
+        senha: senha
       })
     })
 
-    const data = await response.json()
+    const data = await response.text()
 
-    if (data.success) {
-      window.location.href = '../home/index.php'
-      return
-    }
-
-    alert(data.message)
+    console.log(data)
 
   } catch (error) {
     console.error(error)
-    alert('Erro ao logar.')
+    alert('Erro na requisição')
   }
 }
 
