@@ -9,8 +9,13 @@ const cadastra = async () => {
     return
   }
 
+  if(document.querySelector('#senha').value){
+    alert('A senha deve ter pelo menos 6 digitos.')
+    return
+  }
+
   if (document.querySelector('#senha').value !== document.querySelector('#repetir-senha').value) {
-    alert('As senhas devem ser iguais')
+    alert('As senhas devem ser iguais.')
     return
   }
 

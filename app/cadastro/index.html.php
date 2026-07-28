@@ -22,13 +22,13 @@
     <div class="campo">
         <label for="senha">
             Senha
-            <input id="senha" type="password" name="senha">
+            <input id="senha" type="password" name="senha" minlength="6">
         </label>
     </div>
     <div class="campo">
         <label for="repetir-senha">
             Repetir Senha
-            <input id="repetir-senha" type="password" name="repetir-senha">
+            <input id="repetir-senha" type="password" name="repetir-senha" minlength="6">
         </label>
     </div>
     <button id="cadastrar" type="button">Cadastrar</button>
