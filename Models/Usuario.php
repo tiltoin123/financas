@@ -3,6 +3,7 @@
 namespace Models;
 
 use Core\Db;
+use Functions;
 
 class Usuario
 {
@@ -101,13 +102,13 @@ class Usuario
                 FROM usuarios 
                 WHERE email = :email 
                 LIMIT 1";
-
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':email' => strtolower(trim($email))
         ]);
-
+        $stmt->debugDumpParams();
         $data = $stmt->fetch();
+        // Functions::dd($data);
 
         if (!$data) {
             return null;
@@ -153,6 +154,7 @@ class Usuario
 
     public function verificarSenha(string $senha): bool
     {
+
         return password_verify($senha, $this->senha);
     }
 

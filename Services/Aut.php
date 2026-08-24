@@ -2,6 +2,7 @@
 
 namespace Services;
 
+use Functions;
 use Models\Usuario;
 
 class Aut
@@ -9,7 +10,6 @@ class Aut
     public static function login(string $email, string $senha): bool
     {
         $usuario = Usuario::buscarPorEmail($email);
-
         if (!$usuario) {
             return false;
         }

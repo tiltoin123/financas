@@ -1,5 +1,6 @@
 <?php
 
+use Models\Usuario;
 use Services\Aut;
 
 require_once "../../core/bootstrap.php";
@@ -19,7 +20,7 @@ try {
         }
 
         $ret['message'] = 'Usuário ou senha incorretos.';
-
+        // Functions::printJson(Functions::dd(Usuario::buscarPorEmail($email), 'alguma coisa', $email, $senha));
         $logado = Aut::login($email, $senha);
 
         if ($logado) {

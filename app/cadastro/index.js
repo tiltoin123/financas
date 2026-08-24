@@ -36,7 +36,7 @@ const cadastra = async () => {
 
     if (data.success) {
         alert(data.message);
-        window.location.href = '../login/';
+        window.location.href = '../login/index.php';
         return;
     }
 
