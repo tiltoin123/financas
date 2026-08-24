@@ -1,33 +1,19 @@
-<?php
-ob_start();
-?>
-
-<h1>Homepage</h1>
-<p>Teste do sistema</p>
-
-<?php
-$content = ob_get_clean();
-?>
-
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
+    <h1>Bem-vindo!</h1>
+    <p>Você está autenticado.</p>
+    <a href="logout.php">Sair</a>
 
-    <header>
-        Headersrftghsrfhtjytdhjuydtgjyuhtujyd
-    </header>
-
-    <main>
-    </main>
-
-    <footer>
-        Footer
-    </footer>
-
+    <script src="index.js"></script>
 </body>
 
 </html>

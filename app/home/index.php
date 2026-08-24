@@ -2,4 +2,11 @@
 
 require_once "../../core/bootstrap.php";
 
-include "index.html.php";
+use Services\Aut;
+
+if (!Aut::check()) {
+    header('Location: ../login/');
+    exit;
+}
+
+require "index.html.php";
