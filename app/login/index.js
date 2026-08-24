@@ -10,7 +10,7 @@ const loga = async () => {
 
   try {
 
-    const response = await fetch('login.php', {
+    const response = await fetch('./login.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

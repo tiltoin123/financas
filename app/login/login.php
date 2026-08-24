@@ -8,9 +8,11 @@ try {
     $ret['success'] = false;
 
     if (!Aut::check()) {
+        $json = file_get_contents('php://input');
+        $dados = json_decode($json, true) ?? [];
 
-        $email = trim($_POST['email'] ?? '');
-        $senha = $_POST['senha'] ?? '';
+        $email = trim($dados['email'] ?? '');
+        $senha = $dados['senha'] ?? '';
 
         if ($email === '' || $senha === '') {
             throw new Exception('Preencha todos os campos!');

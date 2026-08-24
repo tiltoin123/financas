@@ -3,7 +3,6 @@
 require_once "../../core/bootstrap.php";
 
 use Models\Usuario;
-use Functions\Functions;
 
 
 header('Content-Type: application/json');
