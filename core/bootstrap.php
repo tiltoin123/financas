@@ -21,7 +21,11 @@ define('APP', Config::get('APP_NAME', 'app'));
 define('APP_ENV', Config::get('APP_ENV', 'production'));
 const DEV = APP_ENV !== 'prod';
 require_once RAIZ . 'core/Autoloader.php';
+
 Autoloader::register('App\\', RAIZ);
+Autoloader::register('Models\\', RAIZ . 'Models/');
+Autoloader::register('Services\\', RAIZ . 'Services/');
+Autoloader::register('Core\\', RAIZ . 'Core/');
 
 define('SITE', Config::get('APP_URL', ''));
 

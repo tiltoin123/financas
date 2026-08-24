@@ -9,8 +9,8 @@ const cadastra = async () => {
     return
   }
 
-  if(document.querySelector('#senha').value){
-    alert('A senha deve ter pelo menos 6 digitos.')
+  if (document.querySelector('#senha').value.length < 6) {
+    alert('A senha deve ter pelo menos 8 digitos.')
     return
   }
 
@@ -20,27 +20,31 @@ const cadastra = async () => {
   }
 
   try {
+    const response = await fetch('./cadastra.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            nome,
+            email,
+            senha
+        })
+    });
 
-    const response = await fetch('cadastra.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        nome: nome,
-        email: email,
-        senha: senha
-      })
-    })
+    const data = await response.json();
 
-    const data = await response.text()
+    if (data.success) {
+        alert(data.message);
+        window.location.href = '../login/';
+        return;
+    }
 
-    console.log(data)
-
-  } catch (error) {
-    console.error(error)
-    alert('Erro na requisição')
-  }
+    alert(data.message || 'Erro ao cadastrar.');
+} catch (error) {
+    console.error(error);
+    alert('Erro na requisição');
+}
 }
 
 document.querySelector('#cadastrar').addEventListener('click', cadastra)

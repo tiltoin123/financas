@@ -12,12 +12,17 @@ class Usuario
     private string $email;
     private ?string $senha;
 
-    public function __construct(?int $id, string $nome, string $email, string $senha)
-    {
+    public function __construct(
+        ?int $id,
+        string $nome,
+        string $email,
+        string $senha,
+        bool $senhaHash = false
+    ) {
         $this->id = $id;
         $this->setNome($nome);
         $this->setEmail($email);
-        $this->setSenha($senha);
+        $this->setSenha($senha, $senhaHash);
     }
 
     public function setNome(string $nome): void
@@ -72,12 +77,18 @@ class Usuario
         return $this->senha;
     }
 
-    public function setSenha(?string $senha)
+    public function setSenha(?string $senha, bool $jaHasheada = false): void
     {
         if (!$senha) {
             $this->senha = null;
             return;
         }
+
+        if ($jaHasheada) {
+            $this->senha = $senha;
+            return;
+        }
+
         $this->validarSenha($senha);
         $this->senha = password_hash($senha, PASSWORD_DEFAULT);
     }
@@ -106,7 +117,8 @@ class Usuario
             (int) $data['id'],
             $data['nome'],
             $data['email'],
-            $data['senha']
+            $data['senha'],
+            true
         );
     }
 
@@ -134,7 +146,8 @@ class Usuario
             (int) $data['id'],
             $data['nome'],
             $data['email'],
-            $data['senha']
+            $data['senha'],
+            true
         );
     }
 

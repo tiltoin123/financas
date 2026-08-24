@@ -1,12 +1,12 @@
 <?php
 
-use JetBrains\PhpStorm\NoReturn;
+namespace Functions;
 
 class Functions
 {
 
 
-    #[NoReturn] public static function dd(...$args): void
+    public static function dd(...$args): void
     {
         foreach ($args as $arg) {
             echo "\n";

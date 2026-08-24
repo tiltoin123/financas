@@ -4,46 +4,45 @@ namespace Core;
 
 class Autoloader
 {
-    private string $prefix;
-    private string $baseDir;
+    /**
+     * Mapeia prefixo de namespace => diretório base.
+     *
+     * @var array<string, string>
+     */
+    private static array $mappings = [];
 
-    public function __construct(string $prefix, string $baseDir)
-    {
-        if (!is_dir($baseDir)) {
-            throw new \RuntimeException('BaseDir inválido');
-        }
-        $this->prefix = $prefix;
-        $this->baseDir = $baseDir;
-    }
-
+    /**
+     * Registra um prefixo de namespace para um diretório base.
+     */
     public static function register(string $prefix, string $baseDir): void
     {
-        $loader = new self($prefix, $baseDir);
+        if (!is_dir($baseDir)) {
+            throw new \RuntimeException("BaseDir inválido: {$baseDir}");
+        }
 
-        spl_autoload_register([$loader, 'load']);
+        self::$mappings[$prefix] = $baseDir;
+
+        spl_autoload_register([self::class, 'load']);
     }
 
-    private function load(string $class): void
+    /**
+     * Carrega a classe se o namespace corresponder a um dos prefixos registrados.
+     */
+    private static function load(string $class): void
     {
-        $len = strlen($this->prefix);
-        if (strncmp($this->prefix, $class, $len) !== 0) {
-            return;
-        }
+        foreach (self::$mappings as $prefix => $baseDir) {
+            if (str_starts_with($class, $prefix)) {
+                $relativeClass = substr($class, strlen($prefix));
+                $relativePath  = str_replace('\\', '/', $relativeClass) . '.php';
 
-        $relativeClass = substr($class, $len);
+                $file = rtrim($baseDir, '/') . '/' . $relativePath;
 
-        $path = str_replace('\\', '/', $relativeClass);
+                if (file_exists($file)) {
+                    require $file;
+                }
 
-        $folder = (str_starts_with($path, 'Core/')) ? 'core/' : 'app/';
-
-        if ($folder === 'core/') {
-            $path = substr($path, 5);
-        }
-
-        $file = rtrim($this->baseDir, '/') . '/' . $folder . $path . '.php';
-
-        if (file_exists($file)) {
-            require $file;
+                break;
+            }
         }
     }
 }
