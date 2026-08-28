@@ -11,7 +11,7 @@
 <body>
     <h1>Bem-vindo!</h1>
     <p>Você está autenticado.</p>
-    <a href="logout.php">Sair</a>
+    <a href="../logout/index.php">Sair</a>
 
     <script src="index.js"></script>
 </body>

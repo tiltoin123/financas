@@ -2,3 +2,15 @@ RewriteEngine On
 
 RewriteCond %{REQUEST_URI} !/app/
 RewriteRule ^ - [F]
+# Impede a listagem de diretórios
+Options -Indexes
+<FilesMatch "\.html\.php$">
+    Require all denied
+</FilesMatch>
+# Impede listagem de pastas
+Options -Indexes
+
+# Bloqueia acesso direto a views
+<FilesMatch "\.html\.php$">
+    Require all denied
+</FilesMatch>
