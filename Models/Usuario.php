@@ -106,9 +106,7 @@ class Usuario
         $stmt->execute([
             ':email' => strtolower(trim($email))
         ]);
-        $stmt->debugDumpParams();
         $data = $stmt->fetch();
-        // Functions::dd($data);
 
         if (!$data) {
             return null;

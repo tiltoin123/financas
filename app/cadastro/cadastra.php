@@ -21,7 +21,7 @@ try {
     }
 
     // Se o construtor for (id, nome, email, senha)
-    $usuario = new Usuario(0, $nome, $email, $senha);
+    $usuario = new Usuario(null, $nome, $email, $senha);
     $usuario->salvar();
 
     $ret = [
@@ -29,7 +29,6 @@ try {
         'message' => 'Usuário cadastrado com sucesso!'
     ];
 } catch (Throwable $e) {
-    Functions::dd($e);
     error_log($e);
     $ret = [
         'success' => false,

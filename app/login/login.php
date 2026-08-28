@@ -7,6 +7,7 @@ require_once "../../core/bootstrap.php";
 
 try {
     $ret['success'] = false;
+    $ret['message'] = 'Usuário ou senha incorretos.';
 
     if (!Aut::check()) {
         $json = file_get_contents('php://input');
@@ -19,7 +20,6 @@ try {
             throw new Exception('Preencha todos os campos!');
         }
 
-        $ret['message'] = 'Usuário ou senha incorretos.';
         // Functions::printJson(Functions::dd(Usuario::buscarPorEmail($email), 'alguma coisa', $email, $senha));
         $logado = Aut::login($email, $senha);
 
@@ -32,6 +32,7 @@ try {
         $ret['message'] = 'Usuário já está logado.';
     }
 } catch (Throwable $e) {
+    Functions::dd($e);
     error_log($e);
     $ret = ['success' => false, 'erro' => true, 'mensagem' => $e->getMessage()];
 }
