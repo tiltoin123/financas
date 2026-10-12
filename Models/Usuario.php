@@ -4,6 +4,11 @@ namespace Models;
 
 use Core\Db;
 use Functions;
+use DateTimeImmutable;
+use InvalidArgumentException;
+use PDOException;
+use DomainException;
+use Throwable;
 
 class Usuario
 {
@@ -159,23 +164,48 @@ class Usuario
     private function inserir(): bool
     {
         $db = Db::con();
+        $iniciouTransacao = !$db->inTransaction();
 
-        $sql = "INSERT INTO usuarios (nome, email, senha)
-                VALUES (:nome, :email, :senha)";
-
-        $stmt = $db->prepare($sql);
-
-        $ok = $stmt->execute([
-            ':nome'  => $this->nome,
-            ':email' => $this->email,
-            ':senha' => $this->senha
-        ]);
-
-        if ($ok) {
-            $this->id = (int) $db->lastInsertId();
+        if ($iniciouTransacao) {
+            $db->beginTransaction();
         }
 
-        return $ok;
+        try {
+            $sql = "INSERT INTO usuarios (nome, email, senha)
+                    VALUES (:nome, :email, :senha)";
+
+            $stmt = $db->prepare($sql);
+
+            $ok = $stmt->execute([
+                ':nome'  => $this->nome,
+                ':email' => $this->email,
+                ':senha' => $this->senha
+            ]);
+
+            if (!$ok) {
+                if ($iniciouTransacao) {
+                    $db->rollBack();
+                }
+                return false;
+            }
+
+            $id = (int) $db->lastInsertId();
+
+            Categoria::criarPadrao($id);
+
+            if ($iniciouTransacao) {
+                $db->commit();
+            }
+
+            $this->id = $id;
+
+            return true;
+        } catch (Throwable $e) {
+            if ($iniciouTransacao && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private function atualizar(): bool

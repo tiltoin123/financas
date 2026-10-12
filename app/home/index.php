@@ -9,4 +9,5 @@ if (!Aut::check()) {
     exit;
 }
 
+
 require "index.html.php";

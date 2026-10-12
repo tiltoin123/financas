@@ -7,6 +7,29 @@ use Functions;
 
 class Categoria
 {
+
+    public const PADRAO = [
+        // Despesas
+        ['Moradia', 'despesa'],               // aluguel, condomínio, luz, água, internet
+        ['Mercado', 'despesa'],
+        ['Restaurantes e delivery', 'despesa'],
+        ['Transporte', 'despesa'],            // combustível, app, transporte público
+        ['Saúde', 'despesa'],
+        ['Educação', 'despesa'],
+        ['Lazer', 'despesa'],
+        ['Assinaturas', 'despesa'],           // streaming, apps, academia
+        ['Compras', 'despesa'],               // roupas, eletrônicos, casa
+        ['Dívidas e parcelas', 'despesa'],    // financiamento, empréstimo, cartão parcelado
+        ['Impostos e taxas', 'despesa'],
+        ['Outras despesas', 'despesa'],
+
+        // Receitas
+        ['Salário', 'receita'],
+        ['Renda extra', 'receita'],           // freelas, bicos, vendas
+        ['Rendimentos', 'receita'],           // investimentos, juros
+        ['Outras receitas', 'receita'],
+    ];
+
     private int $id;
     private int $usuarioId;
     private string $nome;
@@ -155,5 +178,22 @@ class Categoria
             ':id' => $this->id,
             ':usuario_id' => $this->usuarioId
         ]);
+    }
+
+    public static function criarPadrao(int $usuarioId): void
+    {
+        $db = Db::con();
+
+        $sql = "INSERT INTO categorias (usuario_id, nome, tipo)
+                VALUES (:usuario_id, :nome, :tipo)";
+        $stmt = $db->prepare($sql);
+
+        foreach (self::PADRAO as [$nome, $tipo]) {
+            $stmt->execute([
+                ':usuario_id' => $usuarioId,
+                ':nome' => $nome,
+                ':tipo' => $tipo
+            ]);
+        }
     }
 }
