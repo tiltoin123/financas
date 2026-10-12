@@ -3,8 +3,8 @@
 namespace Models;
 
 use Core\Db;
-use Functions;
 use DateTimeImmutable;
+use DomainException;
 use InvalidArgumentException;
 use PDOException;
 
@@ -12,83 +12,18 @@ class Recorrencia
 {
     public const PERIODICIDADES = ['unica', 'mensal'];
 
-    private int $id;
-    private int $usuarioId;
-    private ?int $categoriaId;
-    private string $nome;
-    private ?string $descricao;
-    private float $valor;
-    private string $dataInicio;
-    private ?string $dataFim;
-    private string $periodicidade;
-    private int $diaDoMes;
-
     public function __construct(
-        int $id,
-        int $usuarioId,
-        ?int $categoriaId,
-        string $nome,
-        ?string $descricao,
-        float $valor,
-        string $dataInicio,
-        ?string $dataFim,
-        string $periodicidade,
-        int $diaDoMes
-    ) {
-        $this->id = $id;
-        $this->usuarioId = $usuarioId;
-        $this->categoriaId = $categoriaId;
-        $this->nome = $nome;
-        $this->descricao = $descricao;
-        $this->valor = $valor;
-        $this->dataInicio = $dataInicio;
-        $this->dataFim = $dataFim;
-        $this->periodicidade = $periodicidade;
-        $this->diaDoMes = $diaDoMes;
-    }
-
-    // ---------- Getters ----------
-
-    public function getId(): int
-    {
-        return $this->id;
-    }
-    public function getUsuarioId(): int
-    {
-        return $this->usuarioId;
-    }
-    public function getCategoriaId(): ?int
-    {
-        return $this->categoriaId;
-    }
-    public function getNome(): string
-    {
-        return $this->nome;
-    }
-    public function getDescricao(): ?string
-    {
-        return $this->descricao;
-    }
-    public function getValor(): float
-    {
-        return $this->valor;
-    }
-    public function getDataInicio(): string
-    {
-        return $this->dataInicio;
-    }
-    public function getDataFim(): ?string
-    {
-        return $this->dataFim;
-    }
-    public function getPeriodicidade(): string
-    {
-        return $this->periodicidade;
-    }
-    public function getDiaDoMes(): int
-    {
-        return $this->diaDoMes;
-    }
+        public readonly int $id,
+        public readonly int $usuarioId,
+        public ?int $categoriaId,
+        public string $nome,
+        public ?string $descricao,
+        public float $valor,
+        public private(set) string $dataInicio,
+        public private(set) ?string $dataFim,
+        public private(set) string $periodicidade,
+        public private(set) int $diaDoMes
+    ) {}
 
     // ---------- Regra de negócio ----------
 
@@ -171,6 +106,7 @@ class Recorrencia
     ): self {
         [$dataFim, $diaDoMes] = self::normalizar($periodicidade, $dataInicio, $dataFim);
         self::validarCategoria($categoriaId, $usuarioId);
+        self::validarContraFechamento($usuarioId, $dataInicio, $dataFim, null);
 
         $db = Db::con();
 
@@ -218,6 +154,7 @@ class Recorrencia
     ): bool {
         [$dataFim, $diaDoMes] = self::normalizar($periodicidade, $dataInicio, $dataFim);
         self::validarCategoria($categoriaId, $this->usuarioId);
+        self::validarContraFechamento($this->usuarioId, $dataInicio, $dataFim, $this);
 
         $db = Db::con();
 
@@ -294,6 +231,16 @@ class Recorrencia
         );
     }
 
+    private static function validarData(string $data, string $mensagem): DateTimeImmutable
+    {
+        $d = DateTimeImmutable::createFromFormat('!Y-m-d', $data);
+        if (!$d || $d->format('Y-m-d') !== $data) {
+            throw new InvalidArgumentException($mensagem);
+        }
+
+        return $d;
+    }
+
     /** Valida e deriva data_fim e dia_do_mes conforme as regras do modelo. */
     private static function normalizar(string $periodicidade, string $dataInicio, ?string $dataFim): array
     {
@@ -301,15 +248,16 @@ class Recorrencia
             throw new InvalidArgumentException('Periodicidade inválida.');
         }
 
-        $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', $dataInicio);
-        if (!$inicio || $inicio->format('Y-m-d') !== $dataInicio) {
-            throw new InvalidArgumentException('Data de início inválida.');
-        }
+        $inicio = self::validarData($dataInicio, 'Data de início inválida.');
 
         if ($periodicidade === 'unica') {
             $dataFim = $dataInicio;
-        } elseif ($dataFim !== null && $dataFim < $dataInicio) {
-            throw new InvalidArgumentException('A data final não pode ser anterior à inicial.');
+        } elseif ($dataFim !== null) {
+            self::validarData($dataFim, 'Data final inválida.');
+
+            if ($dataFim < $dataInicio) {
+                throw new InvalidArgumentException('A data final não pode ser anterior à inicial.');
+            }
         }
 
         return [$dataFim, (int) $inicio->format('j')];
@@ -320,6 +268,45 @@ class Recorrencia
     {
         if ($categoriaId !== null && Categoria::buscarPorId($categoriaId, $usuarioId) === null) {
             throw new InvalidArgumentException('Categoria inválida.');
+        }
+    }
+
+    /**
+     * Regra "mês fechado é fato": a recorrência não pode passar a cobrir
+     * um mês que já foi fechado, porque ninguém materializaria o evento.
+     * Também respeita o hardcap na data de início.
+     * $atual é null na criação.
+     */
+    private static function validarContraFechamento(
+        int $usuarioId,
+        string $dataInicio,
+        ?string $dataFim,
+        ?self $atual
+    ): void {
+        $inicioMudou = $atual === null || $dataInicio !== $atual->dataInicio;
+        $mesInicio = substr($dataInicio, 0, 7);
+
+        if ($inicioMudou && !Hardcap::podeEditar($mesInicio)) {
+            throw new DomainException('A data de início está fora da janela de edição.');
+        }
+
+        $ultimo = SaldoMensal::ultimoFechado($usuarioId)?->anoMes;
+        if ($ultimo === null) {
+            return;
+        }
+
+        // Início novo ou alterado caindo em mês já fechado
+        if ($inicioMudou && $mesInicio <= $ultimo) {
+            throw new DomainException('O mês de início já está fechado.');
+        }
+
+        // Fim estendido para frente, alcançando meses que já fecharam sem essa recorrência
+        if ($atual !== null && $atual->dataFim !== null) {
+            $estendeu = $dataFim === null || $dataFim > $atual->dataFim;
+
+            if ($estendeu && substr($atual->dataFim, 0, 7) <= $ultimo) {
+                throw new DomainException('Não é possível estender a recorrência para meses já fechados.');
+            }
         }
     }
 }
