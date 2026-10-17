@@ -1,16 +1,14 @@
 RewriteEngine On
 
+# Só permite acesso a /app/
 RewriteCond %{REQUEST_URI} !/app/
 RewriteRule ^ - [F]
-# Impede a listagem de diretórios
-Options -Indexes
-<FilesMatch "\.html\.php$">
-    Require all denied
-</FilesMatch>
-# Impede listagem de pastas
-Options -Indexes
 
-# Bloqueia acesso direto a views
+# Sem listagem de pastas; pasta aberta serve o index.php dela
+Options -Indexes
+DirectoryIndex index.php
+
+# Bloqueia acesso direto às views
 <FilesMatch "\.html\.php$">
     Require all denied
 </FilesMatch>

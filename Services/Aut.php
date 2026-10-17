@@ -58,4 +58,22 @@ class Aut
 
         session_destroy();
     }
+    /** ID do usuário logado, lido da sessão (sem consultar o banco). Null se ninguém logou. */
+    public static function id(): ?int
+    {
+        return isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+    }
+
+    /** Para rotas protegidas: devolve o ID ou manda para o login. */
+    public static function exigir(): int
+    {
+        $id = self::id();
+
+        if ($id === null) {
+            header('Location: /login'); // ajuste para a rota real do seu login
+            exit;
+        }
+
+        return $id;
+    }
 }
