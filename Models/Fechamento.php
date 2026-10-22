@@ -3,10 +3,7 @@
 namespace Models;
 
 use Core\Db;
-use Functions;
 use DateTimeImmutable;
-use InvalidArgumentException;
-use PDOException;
 use DomainException;
 use Throwable;
 
@@ -33,15 +30,7 @@ class Fechamento
                 continue;
             }
 
-            Evento::criar(
-                $usuarioId,
-                $rec->id,
-                $rec->categoriaId,
-                $rec->nome,
-                $rec->descricao,
-                $rec->valor,
-                $data
-            );
+            Evento::deRecorrencia($rec, $data)->salvar();
             $criados++;
         }
 
@@ -130,6 +119,31 @@ class Fechamento
         });
     }
 
+    // ---------- Transação ----------
+
+    /**
+     * Transação que aceita ser chamada dentro de outra (não abre duas).
+     * Pública porque o Evento também precisa gravar e recalcular de forma atômica.
+     */
+    public static function emTransacao(callable $fn): mixed
+    {
+        $db = Db::con();
+
+        if ($db->inTransaction()) {
+            return $fn();
+        }
+
+        $db->beginTransaction();
+        try {
+            $resultado = $fn();
+            $db->commit();
+            return $resultado;
+        } catch (Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
     // ---------- Internos ----------
 
     /** Começo da cadeia: mês da recorrência mais antiga (ou o próprio alvo, se for anterior). */
@@ -167,25 +181,5 @@ class Fechamento
         return (new DateTimeImmutable($anoMes . '-01'))
             ->modify('first day of next month')
             ->format('Y-m');
-    }
-
-    /** Transação que aceita ser chamada dentro de outra (não abre duas). */
-    private static function emTransacao(callable $fn): mixed
-    {
-        $db = Db::con();
-
-        if ($db->inTransaction()) {
-            return $fn();
-        }
-
-        $db->beginTransaction();
-        try {
-            $resultado = $fn();
-            $db->commit();
-            return $resultado;
-        } catch (Throwable $e) {
-            $db->rollBack();
-            throw $e;
-        }
     }
 }

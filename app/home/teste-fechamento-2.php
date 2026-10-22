@@ -18,9 +18,8 @@ use Models\Evento;
 use Models\Fechamento;
 use Models\Recorrencia;
 use Models\SaldoMensal;
-use Services\Aut;
 
-$uid = Aut::exigir();
+$uid = 1;
 $falhas = 0;
 
 // ---------------------------------------------------------------
@@ -131,68 +130,60 @@ if (count(Recorrencia::listarPorUsuario($uid)) < 4) {
 }
 
 // ---------------------------------------------------------------
-echo "== A. Recorrência em mês fechado ==\n";
+echo "== A. Setters, construtor e recorrência em mês fechado ==\n";
 preparar($uid);
 
-lanca(
-    'criar com início em jun (fechado)',
-    fn() => Recorrencia::criar($uid, null, 'TESTE-TEMP', null, -10.0, '2026-06-15', null, 'mensal'),
-    'DomainException'
-);
+// Recorrência nova preenchida pelos setters (o fluxo do salva.php)
+$nova = function (string $dataInicio) use ($uid): Recorrencia {
+    $r = new Recorrencia(0, $uid);
+    $r->nome = 'TESTE-TEMP';
+    $r->periodicidade = 'mensal';
+    $r->dataInicio = $dataInicio;
+    $r->definirValor('despesa', 10);
+    return $r;
+};
 
-lanca(
-    'criar com início em ago (último fechado)',
-    fn() => Recorrencia::criar($uid, null, 'TESTE-TEMP', null, -10.0, '2026-08-20', null, 'mensal'),
-    'DomainException'
-);
+// Os setters barram valor inválido na hora da atribuição
+$vazia = new Recorrencia(0, $uid);
+lanca('nome só com espaços', fn() => $vazia->nome = '   ', 'InvalidArgumentException');
+lanca('data inexistente (31/02)', fn() => $vazia->dataInicio = '2026-02-31', 'InvalidArgumentException');
+lanca('periodicidade desconhecida', fn() => $vazia->periodicidade = 'semanal', 'InvalidArgumentException');
+lanca('valor zero', fn() => $vazia->definirValor('despesa', 0), 'InvalidArgumentException');
+lanca('tipo desconhecido', fn() => $vazia->definirValor('outro', 10), 'InvalidArgumentException');
+lanca('salvar sem preencher nada', fn() => new Recorrencia(0, $uid)->salvar(), 'InvalidArgumentException');
 
-lanca(
-    'criar com início fora do hardcap',
-    fn() => Recorrencia::criar($uid, null, 'TESTE-TEMP', null, -10.0, '2020-01-01', null, 'mensal'),
-    'DomainException'
-);
+$despesa = $nova('2026-09-10');
+conferir('despesa fica negativa', $despesa->valor, -10.0);
 
-// 'Compra' é única e terminou em ago (fechado): transformar em mensal sem fim estenderia o fim
+// id que não existe (ou é de outro usuário) não vira edição
+lanca('construir com id inexistente', fn() => new Recorrencia(999999, $uid), 'InvalidArgumentException');
+lanca('construir com id negativo', fn() => new Recorrencia(-1, $uid), 'InvalidArgumentException');
+
+// Regras de mês fechado
+lanca('criar com início em jun (fechado)', fn() => $nova('2026-06-15')->salvar(), 'DomainException');
+lanca('criar com início em ago (último fechado)', fn() => $nova('2026-08-20')->salvar(), 'DomainException');
+lanca('criar com início fora do hardcap', fn() => $nova('2020-01-01')->salvar(), 'DomainException');
+
+// 'Compra' é única e terminou em ago (fechado): transformá-la em mensal sem fim estenderia o fim
 $compra = recorrenciaPorNome($uid, 'Compra');
-lanca(
-    'estender recorrência que terminou em mês fechado',
-    fn() => $compra->atualizar(
-        $compra->categoriaId,
-        $compra->nome,
-        $compra->descricao,
-        $compra->valor,
-        $compra->dataInicio,
-        null,
-        'mensal'
-    ),
-    'DomainException'
-);
+$compra->periodicidade = 'mensal';
+$compra->dataFim = null;
+lanca('estender recorrência que terminou em mês fechado', fn() => $compra->salvar(), 'DomainException');
 conferir(
-    'Compra continua única após a tentativa',
+    'Compra continua única no banco',
     recorrenciaPorNome($uid, 'Compra')->periodicidade,
     'unica'
 );
 
 // Editar sem mexer em datas é permitido
 $aluguel = recorrenciaPorNome($uid, 'Aluguel');
-conferir(
-    'editar sem mudar datas é permitido',
-    $aluguel->atualizar(
-        $aluguel->categoriaId,
-        $aluguel->nome,
-        $aluguel->descricao,
-        $aluguel->valor,
-        $aluguel->dataInicio,
-        $aluguel->dataFim,
-        $aluguel->periodicidade
-    ),
-    true
-);
+conferir('editar sem mudar datas é permitido', $aluguel->salvar(), true);
 
 // Início em mês aberto funciona
-$nova = Recorrencia::criar($uid, null, 'TESTE-TEMP', null, -10.0, '2026-09-10', null, 'mensal');
-conferir('criar com início em set (aberto) funciona', $nova->dataInicio, '2026-09-10');
-conferir('apagar recorrência sem eventos', $nova->apagar(), true);
+$setembro = $nova('2026-09-10');
+conferir('criar com início em set (aberto) funciona', $setembro->salvar(), true);
+conferir('salvar preenche o id da nova', $setembro->id !== null, true);
+conferir('apagar recorrência sem eventos', $setembro->apagar(), true);
 
 // ---------------------------------------------------------------
 echo "\n== B. Mover evento entre meses ==\n";
@@ -202,28 +193,28 @@ $s = saldosFinais($uid);
 conferir('base: saldo jul', $s['2026-07'] ?? null, 3350.0);
 conferir('base: saldo ago', $s['2026-08'] ?? null, 4820.0);
 
-// Move a Compra (-80) de ago para jul
+// Os setters do Evento barram dado inválido
 $ev = eventoPorNome($uid, '2026-08', 'Compra');
-$dataAntiga = $ev->data;
-$dataNova = '2026-07-15';
-$ev->atualizar($ev->categoriaId, $ev->nome, $ev->descricao, $ev->valor, $dataNova);
+lanca('nome do evento só com espaços', fn() => $ev->nome = '   ', 'InvalidArgumentException');
+lanca('data do evento inexistente (31/02)', fn() => $ev->data = '2026-02-31', 'InvalidArgumentException');
 
-// Errado de propósito: recalcular só a partir do mês novo de destino (o maior)
-Fechamento::recalcularDesde($uid, '2026-08');
-$s = saldosFinais($uid);
-conferir('recalcular só desde ago deixa jul desatualizado', $s['2026-07'] ?? null, 3350.0);
-conferir('...e ago sai errado', $s['2026-08'] ?? null, 4900.0);
+// Move a Compra (-80) de ago para jul: o próprio Evento refaz os saldos desde o menor dos dois meses
+$ev->data = '2026-07-15';
+conferir('mover evento para jul', $ev->salvar(), true);
 
-// Certo: a partir do MENOR entre o mês antigo e o novo (é o que o controller deve fazer)
-Fechamento::recalcularDesde($uid, min(substr($dataAntiga, 0, 7), substr($dataNova, 0, 7)));
 $s = saldosFinais($uid);
-conferir('jul correto após recalcular desde o menor mês', $s['2026-07'] ?? null, 3270.0);
-conferir('ago correto após recalcular desde o menor mês', $s['2026-08'] ?? null, 4820.0);
+conferir('jul correto após mover', $s['2026-07'] ?? null, 3270.0);
+conferir('ago correto após mover', $s['2026-08'] ?? null, 4820.0);
 conferir(
     'saldo inicial de ago = saldo final de jul',
     SaldoMensal::buscarPorMes($uid, '2026-08')?->saldoInicial,
     3270.0
 );
+
+// Evento é fato de mês fechado: não pode ir para mês aberto
+$ev = eventoPorNome($uid, '2026-07', 'Compra');
+$ev->data = '2026-09-15';
+lanca('mover evento para mês aberto', fn() => $ev->salvar(), 'DomainException');
 
 // ---------------------------------------------------------------
 echo "\n== C. Fechar mês com mês posterior já fechado (estado forçado) ==\n";

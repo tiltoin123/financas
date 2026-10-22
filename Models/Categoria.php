@@ -32,8 +32,8 @@ class Categoria
 
     private int $id;
     private int $usuarioId;
-    private string $nome;
-    private string $tipo;
+    public string $nome;
+    public string $tipo;
 
     public function __construct(
         int $id,
@@ -58,18 +58,6 @@ class Categoria
     {
         return $this->usuarioId;
     }
-
-    public function getNome(): string
-    {
-        return $this->nome;
-    }
-
-    public function getTipo(): string
-    {
-        return $this->tipo;
-    }
-
-    // ---------- Consultas ----------
 
     public static function buscarPorId(int $id, int $usuarioId): ?self
     {

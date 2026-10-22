@@ -2,12 +2,16 @@
 
 require_once "../../core/bootstrap.php";
 
+use Models\Categoria;
 use Services\Aut;
 
-if (!Aut::check()) {
+$usuario = Aut::user();
+if ($usuario === null) {
     header('Location: ../login/');
     exit;
 }
 
+$categorias = Categoria::listarPorUsuario($usuario->id);
+$mesAtual = date('Y-m');
 
 require "index.html.php";

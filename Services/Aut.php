@@ -70,7 +70,7 @@ class Aut
         $id = self::id();
 
         if ($id === null) {
-            header('Location: /login'); // ajuste para a rota real do seu login
+            header('Location: /login/index.php'); // ajuste para a rota real do seu login
             exit;
         }
 

@@ -11,19 +11,123 @@ use PDOException;
 class Recorrencia
 {
     public const PERIODICIDADES = ['unica', 'mensal'];
+    public const TIPOS = ['receita', 'despesa'];
 
-    public function __construct(
-        public readonly int $id,
-        public readonly int $usuarioId,
-        public ?int $categoriaId,
-        public string $nome,
-        public ?string $descricao,
-        public float $valor,
-        public private(set) string $dataInicio,
-        public private(set) ?string $dataFim,
-        public private(set) string $periodicidade,
-        public private(set) int $diaDoMes
-    ) {}
+    // ---------- Propriedades: cada atribuição é validada ----------
+
+    /** null até a recorrência ser salva. Só a própria classe escreve. */
+    public private(set) ?int $id = null;
+
+    public readonly int $usuarioId;
+
+    /** Existência e dono da categoria são conferidos em salvar() (dependem do banco). */
+    public ?int $categoriaId = null;
+
+    public string $nome = '' {
+        set {
+            $limpo = trim($value);
+
+            if ($limpo === '' || mb_strlen($limpo) > 150) {
+                throw new InvalidArgumentException('Informe um nome de até 150 caracteres.');
+            }
+
+            $this->nome = $limpo;
+        }
+    }
+
+    public ?string $descricao = null {
+        set {
+            $limpa = $value === null ? null : trim($value);
+            $limpa = $limpa === '' ? null : $limpa;
+
+            if ($limpa !== null && mb_strlen($limpa) > 255) {
+                throw new InvalidArgumentException('A descrição pode ter no máximo 255 caracteres.');
+            }
+
+            $this->descricao = $limpa;
+        }
+    }
+
+    /** Com sinal (despesa negativa). Só definirValor() escreve aqui. */
+    public private(set) float $valor = 0.0;
+
+    public string $dataInicio = '' {
+        set {
+            self::validarData($value, 'Data de início inválida.');
+            $this->dataInicio = $value;
+        }
+    }
+
+    public ?string $dataFim = null {
+        set {
+            if ($value !== null) {
+                self::validarData($value, 'Data final inválida.');
+            }
+
+            $this->dataFim = $value;
+        }
+    }
+
+    public string $periodicidade = 'unica' {
+        set {
+            if (!in_array($value, self::PERIODICIDADES, true)) {
+                throw new InvalidArgumentException('Periodicidade inválida.');
+            }
+
+            $this->periodicidade = $value;
+        }
+    }
+
+    /** Dia do mês em que a recorrência cai: sempre o dia da data de início. */
+    public int $diaDoMes {
+        get => (int) substr($this->dataInicio, 8, 2);
+    }
+
+    // ---------- Construção ----------
+
+    /**
+     * $id = 0: recorrência nova (sem id até ser salva).
+     * $id > 0: carrega do banco; precisa ser do usuário, senão lança InvalidArgumentException.
+     */
+    public function __construct(int $id, int $usuarioId)
+    {
+        $this->usuarioId = $usuarioId;
+
+        if ($id === 0) {
+            return;
+        }
+
+        $linha = self::buscarLinha($id, $usuarioId);
+
+        if ($linha === null) {
+            throw new InvalidArgumentException('Recorrência não encontrada.');
+        }
+
+        $this->id = $id;
+        $this->preencher($linha);
+    }
+
+    /**
+     * Valor e tipo entram juntos porque o sinal depende do tipo.
+     * Receita fica positiva e despesa negativa: o saldo é uma soma de valores.
+     */
+    public function definirValor(string $tipo, string|int|float $valor): void
+    {
+        if (!in_array($tipo, self::TIPOS, true)) {
+            throw new InvalidArgumentException('Escolha receita ou despesa.');
+        }
+        if (!is_numeric($valor)) {
+            throw new InvalidArgumentException('Informe um valor numérico.');
+        }
+
+        $valor = round((float) $valor, 2);
+
+        if ($valor < 0.01 || $valor > 99999999.99) {
+            throw new InvalidArgumentException('Informe um valor entre 0,01 e 99.999.999,99.');
+        }
+
+        $this->valor = $tipo === 'despesa' ? -$valor : $valor;
+    }
 
     // ---------- Regra de negócio ----------
 
@@ -52,23 +156,12 @@ class Recorrencia
 
     // ---------- Consultas ----------
 
+    /** Versão que devolve null em vez de lançar exceção quando não encontra. */
     public static function buscarPorId(int $id, int $usuarioId): ?self
     {
-        $db = Db::con();
+        $linha = self::buscarLinha($id, $usuarioId);
 
-        $sql = "SELECT id, usuario_id, categoria_id, nome, descricao, valor,
-                       data_inicio, data_fim, periodicidade, dia_do_mes
-                FROM recorrencias
-                WHERE id = :id AND usuario_id = :usuario_id
-                LIMIT 1";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':id' => $id,
-            ':usuario_id' => $usuarioId
-        ]);
-        $data = $stmt->fetch();
-
-        return $data ? self::deLinha($data) : null;
+        return $linha ? self::deLinha($linha, $usuarioId) : null;
     }
 
     /** @return self[] */
@@ -77,7 +170,7 @@ class Recorrencia
         $db = Db::con();
 
         $sql = "SELECT id, usuario_id, categoria_id, nome, descricao, valor,
-                       data_inicio, data_fim, periodicidade, dia_do_mes
+                       data_inicio, data_fim, periodicidade
                 FROM recorrencias
                 WHERE usuario_id = :usuario_id
                 ORDER BY data_inicio ASC, id ASC";
@@ -85,8 +178,8 @@ class Recorrencia
         $stmt->execute([':usuario_id' => $usuarioId]);
 
         $lista = [];
-        foreach ($stmt->fetchAll() as $data) {
-            $lista[] = self::deLinha($data);
+        foreach ($stmt->fetchAll() as $linha) {
+            $lista[] = self::deLinha($linha, $usuarioId);
         }
 
         return $lista;
@@ -94,19 +187,20 @@ class Recorrencia
 
     // ---------- Persistência ----------
 
-    public static function criar(
-        int $usuarioId,
-        ?int $categoriaId,
-        string $nome,
-        ?string $descricao,
-        float $valor,
-        string $dataInicio,
-        ?string $dataFim,
-        string $periodicidade
-    ): self {
-        [$dataFim, $diaDoMes] = self::normalizar($periodicidade, $dataInicio, $dataFim);
-        self::validarCategoria($categoriaId, $usuarioId);
-        self::validarContraFechamento($usuarioId, $dataInicio, $dataFim, null);
+    /**
+     * Cria (sem id) ou edita (com id). Lança InvalidArgumentException (dado inválido)
+     * ou DomainException (regra de mês fechado / hardcap).
+     */
+    public function salvar(): bool
+    {
+        $this->validar();
+
+        return $this->id === null ? $this->criar() : $this->editar();
+    }
+
+    private function criar(): bool
+    {
+        self::validarContraFechamento($this->usuarioId, $this->dataInicio, $this->dataFim, null);
 
         $db = Db::con();
 
@@ -117,44 +211,37 @@ class Recorrencia
                     (:usuario_id, :categoria_id, :nome, :descricao, :valor,
                      :data_inicio, :data_fim, :periodicidade, :dia_do_mes)";
         $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':usuario_id' => $usuarioId,
-            ':categoria_id' => $categoriaId,
-            ':nome' => trim($nome),
-            ':descricao' => $descricao,
-            ':valor' => $valor,
-            ':data_inicio' => $dataInicio,
-            ':data_fim' => $dataFim,
-            ':periodicidade' => $periodicidade,
-            ':dia_do_mes' => $diaDoMes
+
+        $ok = $stmt->execute([
+            ':usuario_id' => $this->usuarioId,
+            ':categoria_id' => $this->categoriaId,
+            ':nome' => $this->nome,
+            ':descricao' => $this->descricao,
+            ':valor' => $this->valor,
+            ':data_inicio' => $this->dataInicio,
+            ':data_fim' => $this->dataFim,
+            ':periodicidade' => $this->periodicidade,
+            ':dia_do_mes' => $this->diaDoMes
         ]);
 
-        return new self(
-            (int) $db->lastInsertId(),
-            $usuarioId,
-            $categoriaId,
-            trim($nome),
-            $descricao,
-            $valor,
-            $dataInicio,
-            $dataFim,
-            $periodicidade,
-            $diaDoMes
-        );
+        if ($ok) {
+            $this->id = (int) $db->lastInsertId();
+        }
+
+        return $ok;
     }
 
-    public function atualizar(
-        ?int $categoriaId,
-        string $nome,
-        ?string $descricao,
-        float $valor,
-        string $dataInicio,
-        ?string $dataFim,
-        string $periodicidade
-    ): bool {
-        [$dataFim, $diaDoMes] = self::normalizar($periodicidade, $dataInicio, $dataFim);
-        self::validarCategoria($categoriaId, $this->usuarioId);
-        self::validarContraFechamento($this->usuarioId, $dataInicio, $dataFim, $this);
+    private function editar(): bool
+    {
+        // Estado salvo no banco: base de comparação das regras de mês fechado.
+        // Se sumiu (apagada por outra aba, por exemplo), não há o que editar.
+        $atual = self::buscarPorId($this->id, $this->usuarioId);
+
+        if ($atual === null) {
+            throw new InvalidArgumentException('Recorrência não encontrada.');
+        }
+
+        self::validarContraFechamento($this->usuarioId, $this->dataInicio, $this->dataFim, $atual);
 
         $db = Db::con();
 
@@ -164,36 +251,28 @@ class Recorrencia
                     periodicidade = :periodicidade, dia_do_mes = :dia_do_mes
                 WHERE id = :id AND usuario_id = :usuario_id";
         $stmt = $db->prepare($sql);
-        $sucesso = $stmt->execute([
-            ':categoria_id' => $categoriaId,
-            ':nome' => trim($nome),
-            ':descricao' => $descricao,
-            ':valor' => $valor,
-            ':data_inicio' => $dataInicio,
-            ':data_fim' => $dataFim,
-            ':periodicidade' => $periodicidade,
-            ':dia_do_mes' => $diaDoMes,
+
+        return $stmt->execute([
+            ':categoria_id' => $this->categoriaId,
+            ':nome' => $this->nome,
+            ':descricao' => $this->descricao,
+            ':valor' => $this->valor,
+            ':data_inicio' => $this->dataInicio,
+            ':data_fim' => $this->dataFim,
+            ':periodicidade' => $this->periodicidade,
+            ':dia_do_mes' => $this->diaDoMes,
             ':id' => $this->id,
             ':usuario_id' => $this->usuarioId
         ]);
-
-        if ($sucesso) {
-            $this->categoriaId = $categoriaId;
-            $this->nome = trim($nome);
-            $this->descricao = $descricao;
-            $this->valor = $valor;
-            $this->dataInicio = $dataInicio;
-            $this->dataFim = $dataFim;
-            $this->periodicidade = $periodicidade;
-            $this->diaDoMes = $diaDoMes;
-        }
-
-        return $sucesso;
     }
 
-    /** Retorna false se já existem eventos materializados (FK RESTRICT). */
+    /** Retorna false se já existem eventos materializados (FK RESTRICT) ou se não foi salva. */
     public function apagar(): bool
     {
+        if ($this->id === null) {
+            return false;
+        }
+
         $db = Db::con();
 
         $sql = "DELETE FROM recorrencias
@@ -215,58 +294,81 @@ class Recorrencia
 
     // ---------- Internos ----------
 
-    private static function deLinha(array $d): self
+    /** Linha do banco ou null. Sempre filtra por usuário. */
+    private static function buscarLinha(int $id, int $usuarioId): ?array
     {
-        return new self(
-            (int) $d['id'],
-            (int) $d['usuario_id'],
-            $d['categoria_id'] !== null ? (int) $d['categoria_id'] : null,
-            $d['nome'],
-            $d['descricao'],
-            (float) $d['valor'],
-            $d['data_inicio'],
-            $d['data_fim'],
-            $d['periodicidade'],
-            (int) $d['dia_do_mes']
-        );
+        $db = Db::con();
+
+        $sql = "SELECT id, usuario_id, categoria_id, nome, descricao, valor,
+                       data_inicio, data_fim, periodicidade
+                FROM recorrencias
+                WHERE id = :id AND usuario_id = :usuario_id
+                LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':id' => $id,
+            ':usuario_id' => $usuarioId
+        ]);
+        $linha = $stmt->fetch();
+
+        return $linha ?: null;
     }
 
-    private static function validarData(string $data, string $mensagem): DateTimeImmutable
+    /** Monta a instância a partir de uma linha já lida (sem nova consulta). */
+    private static function deLinha(array $linha, int $usuarioId): self
+    {
+        $r = new self(0, $usuarioId);
+        $r->id = (int) $linha['id'];
+        $r->preencher($linha);
+
+        return $r;
+    }
+
+    /** Atribui os campos do banco pelos mesmos setters de qualquer outra atribuição. */
+    private function preencher(array $linha): void
+    {
+        $valor = (float) $linha['valor'];
+
+        $this->categoriaId = $linha['categoria_id'] !== null ? (int) $linha['categoria_id'] : null;
+        $this->nome = $linha['nome'];
+        $this->descricao = $linha['descricao'];
+        $this->definirValor($valor < 0 ? 'despesa' : 'receita', abs($valor));
+        $this->dataInicio = $linha['data_inicio'];
+        $this->dataFim = $linha['data_fim'];
+        $this->periodicidade = $linha['periodicidade'];
+    }
+
+    private static function validarData(string $data, string $mensagem): void
     {
         $d = DateTimeImmutable::createFromFormat('!Y-m-d', $data);
         if (!$d || $d->format('Y-m-d') !== $data) {
             throw new InvalidArgumentException($mensagem);
         }
-
-        return $d;
     }
 
-    /** Valida e deriva data_fim e dia_do_mes conforme as regras do modelo. */
-    private static function normalizar(string $periodicidade, string $dataInicio, ?string $dataFim): array
+    /**
+     * O que um setter isolado não enxerga: campos obrigatórios que ficaram nos valores
+     * iniciais, relação entre os campos e a categoria (depende do banco).
+     */
+    private function validar(): void
     {
-        if (!in_array($periodicidade, self::PERIODICIDADES, true)) {
-            throw new InvalidArgumentException('Periodicidade inválida.');
+        if ($this->nome === '') {
+            throw new InvalidArgumentException('Informe um nome de até 150 caracteres.');
+        }
+        if ($this->valor === 0.0) {
+            throw new InvalidArgumentException('Informe o valor e se é receita ou despesa.');
+        }
+        if ($this->dataInicio === '') {
+            throw new InvalidArgumentException('Data de início inválida.');
         }
 
-        $inicio = self::validarData($dataInicio, 'Data de início inválida.');
-
-        if ($periodicidade === 'unica') {
-            $dataFim = $dataInicio;
-        } elseif ($dataFim !== null) {
-            self::validarData($dataFim, 'Data final inválida.');
-
-            if ($dataFim < $dataInicio) {
-                throw new InvalidArgumentException('A data final não pode ser anterior à inicial.');
-            }
+        if ($this->periodicidade === 'unica') {
+            $this->dataFim = $this->dataInicio; // evento único: data_fim = data_inicio
+        } elseif ($this->dataFim !== null && $this->dataFim < $this->dataInicio) {
+            throw new InvalidArgumentException('A data final não pode ser anterior à inicial.');
         }
 
-        return [$dataFim, (int) $inicio->format('j')];
-    }
-
-    /** Impede usar categoria de outro usuário. */
-    private static function validarCategoria(?int $categoriaId, int $usuarioId): void
-    {
-        if ($categoriaId !== null && Categoria::buscarPorId($categoriaId, $usuarioId) === null) {
+        if ($this->categoriaId !== null && Categoria::buscarPorId($this->categoriaId, $this->usuarioId) === null) {
             throw new InvalidArgumentException('Categoria inválida.');
         }
     }
@@ -275,7 +377,7 @@ class Recorrencia
      * Regra "mês fechado é fato": a recorrência não pode passar a cobrir
      * um mês que já foi fechado, porque ninguém materializaria o evento.
      * Também respeita o hardcap na data de início.
-     * $atual é null na criação.
+     * $atual é o estado salvo no banco (null na criação).
      */
     private static function validarContraFechamento(
         int $usuarioId,

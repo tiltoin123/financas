@@ -25,9 +25,8 @@ use Models\Fechamento;
 use Models\Recorrencia;
 use Models\Saldo;
 use Models\SaldoMensal;
-use Services\Aut;
 
-$uid = $uid = Aut::exigir();;
+$uid = 1;
 $falhas = 0;
 
 function conferir(string $nome, mixed $obtido, mixed $esperado): void
@@ -126,8 +125,8 @@ if ($aluguel === null) {
     exit(1);
 }
 
-$aluguel->atualizar($aluguel->categoriaId, $aluguel->nome, $aluguel->descricao, -1300.0, $aluguel->data);
-Fechamento::recalcularDesde($uid, '2026-06');
+$aluguel->definirValor('despesa', 1300);
+$aluguel->salvar(); // o próprio Evento refaz os saldos em cascata
 
 $s = saldosFinais($uid);
 conferir('saldo final jun após editar', $s['2026-06'] ?? null, 1700.0);
