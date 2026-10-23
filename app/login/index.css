@@ -61,3 +61,7 @@ body {
 #login-form button:hover, a:hover {
     background: #e8e8e8;
 }
+
+:root { color-scheme: dark; }
+body { background: #1e2127; color: #d7dae0; }
+dialog { background: #282c34; color: #d7dae0; }

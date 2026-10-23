@@ -47,3 +47,8 @@ body {
 .btn-primary:hover {
     background: #2980b9;
 }
+
+
+:root { color-scheme: dark; }
+body { background: #1e2127; color: #d7dae0; }
+dialog { background: #282c34; color: #d7dae0; }

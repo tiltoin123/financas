@@ -292,6 +292,47 @@ class Recorrencia
         }
     }
 
+    /**
+     * Tira a recorrência de $anoMes ('YYYY-MM', um mês aberto onde ela aparece) em diante,
+     * sem mexer no passado. Se não sobra nenhum mês antes dele, apaga de verdade;
+     * senão ela passa a terminar no último dia do mês anterior.
+     * Retorna 'apagada' ou 'encerrada'.
+     */
+    public function removerAPartirDe(string $anoMes): string
+    {
+        if ($this->id === null) {
+            throw new InvalidArgumentException('Recorrência inválida.');
+        }
+
+        $mes = DateTimeImmutable::createFromFormat('!Y-m-d', $anoMes . '-01');
+        if (!$mes || $mes->format('Y-m') !== $anoMes) {
+            throw new InvalidArgumentException('Mês inválido.');
+        }
+
+        // Em mês fechado a linha da tela é um evento, não a recorrência
+        if (SaldoMensal::buscarPorMes($this->usuarioId, $anoMes)?->fechado === true) {
+            throw new DomainException('Esse mês já está fechado: apague o lançamento do mês.');
+        }
+        if ($this->dataNoMes($anoMes) === null) {
+            throw new InvalidArgumentException('Esta recorrência não aparece nesse mês.');
+        }
+
+        // Nenhum mês anterior sobraria: apagar de verdade
+        if (substr($this->dataInicio, 0, 7) >= $anoMes) {
+            if (!$this->apagar()) {
+                throw new DomainException('Esta recorrência já gerou eventos e não pode ser apagada.');
+            }
+
+            return 'apagada';
+        }
+
+        // Termina no mês anterior: o passado fica como está
+        $this->dataFim = $mes->modify('last day of previous month')->format('Y-m-d');
+        $this->salvar();
+
+        return 'encerrada';
+    }
+
     // ---------- Internos ----------
 
     /** Linha do banco ou null. Sempre filtra por usuário. */

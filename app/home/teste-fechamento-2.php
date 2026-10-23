@@ -1,16 +1,5 @@
 <?php
 
-/**
- * Testes complementares do Fechamento.  Rodar: php teste_fechamento_2.php
- *
- * Pré-requisito: usuário 1 com as 4 recorrências de amostra
- * (Salário, Aluguel, Parcela, Compra).
- *
- * ATENÇÃO: cada bloco começa apagando os eventos e saldos do usuário 1
- * e refechando jun/jul/ago de 2026 do zero. As recorrências de amostra
- * não são alteradas. No fim, eventos e saldos ficam zerados.
- */
-
 require_once "../../core/bootstrap.php";
 
 use Core\Db;
@@ -260,6 +249,32 @@ conferir(
     Fechamento::materializar($uid, '2026-07'),
     1
 );
+
+// ---------------------------------------------------------------
+echo "\n== E. Remover recorrência de um mês aberto em diante ==\n";
+preparar($uid);
+
+$aluguel = recorrenciaPorNome($uid, 'Aluguel');
+conferir('remover de out encerra no mês anterior', $aluguel->removerAPartirDe('2026-10'), 'encerrada');
+
+$aluguel = recorrenciaPorNome($uid, 'Aluguel');
+conferir('passa a terminar em 30/09', $aluguel->dataFim, '2026-09-30');
+conferir('set continua aparecendo', $aluguel->dataNoMes('2026-09') !== null, true);
+conferir('out não aparece mais', $aluguel->dataNoMes('2026-10'), null);
+conferir('eventos do passado intactos', totalEventos($uid), 9);
+
+lanca('remover a partir de mês fechado', fn() => $aluguel->removerAPartirDe('2026-07'), 'DomainException');
+lanca('remover de mês em que não aparece', fn() => $aluguel->removerAPartirDe('2026-11'), 'InvalidArgumentException');
+
+// Recorrência que começa no próprio mês: não sobra mês anterior, apaga de verdade
+$outubro = $nova('2026-10-10');
+$outubro->salvar();
+conferir('sem mês anterior: apaga de verdade', $outubro->removerAPartirDe('2026-10'), 'apagada');
+conferir('e some do banco', Recorrencia::buscarPorId($outubro->id, $uid), null);
+
+// Restaura o Aluguel de amostra
+$aluguel->dataFim = null;
+conferir('restaura o Aluguel de amostra', $aluguel->salvar(), true);
 
 // ---------------------------------------------------------------
 limpar($uid);

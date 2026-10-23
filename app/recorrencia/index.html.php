@@ -14,7 +14,7 @@ $dataBr = fn(?string $d): string => $d ? date('d/m/Y', strtotime($d)) : '—';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Recorrências</title>
-    <?php /* inclua aqui seus css */ ?>
+    <link rel="stylesheet" href="./index.css">
 </head>
 
 <body>
