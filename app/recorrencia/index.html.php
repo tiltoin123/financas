@@ -106,7 +106,7 @@ $dataBr = fn(?string $d): string => $d ? date('d/m/Y', strtotime($d)) : '—';
                     <optgroup label="<?= $rotulo ?>">
                         <?php foreach ($categorias as $c): ?>
                             <?php if ($c->tipo === $tipo): ?>
-                                <option value="<?= $c->getId() ?>"><?= $h($c->nome) ?></option>
+                                <option value="<?= $c->id ?>"><?= $h($c->nome) ?></option>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </optgroup>

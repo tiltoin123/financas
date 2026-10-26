@@ -24,7 +24,7 @@ class Extrato
 
         $nomesCategoria = [];
         foreach (Categoria::listarPorUsuario($usuarioId) as $c) {
-            $nomesCategoria[$c->getId()] = $c->nome;
+            $nomesCategoria[$c->id] = $c->nome;
         }
 
         // Linhas brutas: eventos (mês fechado) ou ocorrências calculadas (mês aberto)

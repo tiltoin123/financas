@@ -60,7 +60,7 @@ const excluir = (c) => {
     return
   }
 
-  enviar('./excluir.php', { id: c.id }, 'Erro ao apagar.')
+  enviar('./exclui.php', { id: c.id }, 'Erro ao apagar.')
 }
 
 document.querySelector('#nova').addEventListener('click', () => abrirModal())

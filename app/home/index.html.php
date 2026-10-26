@@ -20,7 +20,7 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
         <h1>Painel</h1>
 
         <p><a href="../recorrencia/index.php">Recorrências</a></p>
-
+        <p><a href="../categoria/index.php">Categorias</a></p>
         <section id="navegacao">
             <button type="button" id="mes-anterior">&larr;</button>
             <strong id="mes-titulo"></strong>
@@ -93,7 +93,7 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
                     <optgroup label="<?= $rotulo ?>">
                         <?php foreach ($categorias as $c): ?>
                             <?php if ($c->tipo === $tipo): ?>
-                                <option value="<?= $c->getId() ?>"><?= $h($c->nome) ?></option>
+                                <option value="<?= $c->id ?>"><?= $h($c->nome) ?></option>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </optgroup>

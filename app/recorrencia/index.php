@@ -17,7 +17,7 @@ $categorias   = Categoria::listarPorUsuario($usuario->id);
 
 $nomesCategoria = [];
 foreach ($categorias as $c) {
-    $nomesCategoria[$c->getId()] = $c->nome;
+    $nomesCategoria[$c->id] = $c->nome;
 }
 
 require "index.html.php";

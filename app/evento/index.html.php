@@ -12,7 +12,7 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Painel</title>
-    <?php /* inclua aqui seus css */ ?>
+    <link rel="stylesheet" href="./index.css">
 </head>
 
 <body>
@@ -93,7 +93,7 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
                     <optgroup label="<?= $rotulo ?>">
                         <?php foreach ($categorias as $c): ?>
                             <?php if ($c->tipo === $tipo): ?>
-                                <option value="<?= $c->getId() ?>"><?= $h($c->nome) ?></option>
+                                <option value="<?= $c->id ?>"><?= $h($c->nome) ?></option>
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </optgroup>

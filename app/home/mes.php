@@ -24,5 +24,5 @@ try {
     Functions::printJson(['success' => false, 'message' => $e->getMessage()]);
 } catch (Throwable $e) {
     error_log($e->getMessage());
-    Functions::printJson(['success' => false, 'message' => 'Erro ao carregar o mês.']);
+    Functions::printJson(['success' => false, 'message' => 'Erro ao carregar o mês: ' . $e->getMessage()]);
 }
