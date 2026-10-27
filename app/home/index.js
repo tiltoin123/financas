@@ -147,7 +147,7 @@ const apagar = async (l) => {
   const recorrencia = l.origem === 'recorrencia'
 
   const pergunta = recorrencia
-    ? `Apagar a recorrência "${l.nome}"? Ela some de todos os meses abertos.`
+    ? `Remover "${l.nome}" de ${rotuloMes(mesAtual)} em diante? Os meses já fechados não mudam.`
     : `Apagar o lançamento "${l.nome}" deste mês fechado? Os saldos dos meses fechados serão refeitos.`
 
   if (!confirm(pergunta)) {
@@ -155,8 +155,8 @@ const apagar = async (l) => {
   }
 
   const data = await post(
-    recorrencia ? '../recorrencia/excluir.php' : '../evento/excluir.php',
-    { id: recorrencia ? l.recorrenciaId : l.eventoId }
+    recorrencia ? '../recorrencia/encerrar.php' : '../evento/excluir.php',
+    recorrencia ? { id: l.recorrenciaId, mes: mesAtual } : { id: l.eventoId }
   )
 
   if (!data) {

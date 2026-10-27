@@ -1,5 +1,5 @@
-/* Estilo base do app: tema escuro, conteúdo centralizado com flexbox e responsivo.
-   Para mudar o visual, ajuste as variáveis abaixo. */
+main > p { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+#sair { margin-left: auto; }
 
 :root {
   color-scheme: dark;
