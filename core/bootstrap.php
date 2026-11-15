@@ -6,7 +6,8 @@ use Core\Autoloader;
 use Core\Config;
 
 error_reporting(E_ALL);
-ini_set('display_errors', '0');
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 
 define(
     'RAIZ',
@@ -15,17 +16,19 @@ define(
 
 require_once RAIZ . 'core/Config.php';
 require_once RAIZ . 'core/Functions.php';
+
 Config::loadDotEnv(RAIZ . '.env');
 
 define('APP', Config::get('APP_NAME', 'app'));
 define('APP_ENV', Config::get('APP_ENV', 'production'));
-const DEV = APP_ENV !== 'prod';
+define('DEV', APP_ENV !== 'production');
+
 require_once RAIZ . 'core/Autoloader.php';
 
 Autoloader::register('App\\', RAIZ);
 Autoloader::register('Models\\', RAIZ . 'Models/');
 Autoloader::register('Services\\', RAIZ . 'Services/');
-Autoloader::register('Core\\', RAIZ . 'Core/');
+Autoloader::register('Core\\', RAIZ . 'core/');
 
 define('SITE', Config::get('APP_URL', ''));
 
