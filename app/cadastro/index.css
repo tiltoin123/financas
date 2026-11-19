@@ -65,7 +65,8 @@ small { color: var(--suave); }
 
 button {
   font: inherit;
-  padding: .55rem 1.1rem;
+  padding: .5rem 1rem;
+  margin: 0.5rem 0;
   color: var(--texto);
   background: var(--superficie-2);
   border: 1px solid var(--borda);
@@ -108,7 +109,7 @@ label {
   flex-direction: column;
   gap: .35rem;
   color: var(--suave);
-  font-size: .9rem;
+  font-size: 1rem;
 }
 
 input[type="text"],
@@ -124,6 +125,7 @@ select {
   background: var(--fundo);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+  max-width: 400px;
 }
 
 fieldset {
@@ -136,7 +138,7 @@ fieldset {
   border-radius: var(--raio);
 }
 
-legend { padding: 0 .4rem; color: var(--suave); font-size: .9rem; }
+legend { padding: 0 .4rem; color: var(--suave); font-size: 1rem; }
 
 fieldset label {
   flex-direction: row;

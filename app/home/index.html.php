@@ -24,7 +24,6 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
             <a id="sair" href="../logout/index.php">Sair</button>
         </p>
         <p><a href="../recorrencia/index.php">Recorrências</a></p>
-        <p><a href="../categoria/index.php">Categorias</a></p>
         <section id="navegacao">
             <button type="button" id="mes-anterior">&larr;</button>
             <strong id="mes-titulo"></strong>
