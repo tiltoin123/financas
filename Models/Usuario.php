@@ -191,7 +191,6 @@ class Usuario
 
             $id = (int) $db->lastInsertId();
 
-            Categoria::criarPadrao($id);
 
             if ($iniciouTransacao) {
                 $db->commit();

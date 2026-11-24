@@ -3,6 +3,7 @@
 require_once "../../core/bootstrap.php";
 
 use Models\Usuario;
+use Models\Categoria;
 
 
 header('Content-Type: application/json');
@@ -28,6 +29,7 @@ try {
         'success' => true,
         'message' => 'Usuário cadastrado com sucesso!'
     ];
+    Categoria::criarPadrao($usuario->id);
 } catch (Throwable $e) {
     error_log($e);
     $ret = [

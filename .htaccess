@@ -1,21 +1,27 @@
-
-RewriteEngine On
-
-# Permite somente o index.php da raiz e /app/
-RewriteRule ^(index\.php|app(/.*)?)$ - [L]
-
-# Bloqueia todos os demais caminhos
-RewriteRule ^ - [F]
-
+# Configuracao para Apache 2.4, na raiz publica do projeto.
+# Preserva o mapeamento de paginas por arquivos, sem roteador PHP.
 Options -Indexes
 DirectoryIndex index.php
+RewriteEngine On
 
-# Bloqueia acesso direto às views
-<FilesMatch "\.html\.php$">
+# Bloqueia dotfiles/diretorios ocultos e arquivos com extensoes sensiveis.
+# A verificacao aplica-se tambem a caminhos sob /app/.
+<FilesMatch "(^\.|\.html\.php$|\.(?:env|ini|log|sql|sqlite|sqlite3|bak|backup|old|orig|dist|swp|yml|yaml|md|lock|phar)$)">
     Require all denied
 </FilesMatch>
 
-# Bloqueia arquivos ocultos
-<FilesMatch "^\.">
-    Require all denied
-</FilesMatch>
+# Apenas pagina inicial e recursos/entradas sob /app/ sao expostos.
+# Mantenha essa regra se seus CSS/JS forem servidos em /app/.
+RewriteRule ^(index\.php|app(/.*)?)$ - [L]
+RewriteRule ^ - [F]
+
+# Cabecalhos defensivos quando mod_headers esta disponivel.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# HTTPS, CSRF e autorizacao de usuarios exigem controles adicionais.
+# Nao habilitar HSTS sem confirmar HTTPS funcional em todos os acessos.
