@@ -20,8 +20,9 @@ const enviar = async (url, dados, erroPadrao) => {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      },
+        'Content-Type': 'application/json',
+    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
       body: JSON.stringify(dados)
     })
 

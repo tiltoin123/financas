@@ -2,6 +2,7 @@
 <html lang="pt">
 
 <head>
+    <meta name="csrf-token" content="<?= htmlspecialchars(\Core\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="./index.css">
     <title>Finanças</title>
 </head>

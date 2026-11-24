@@ -13,6 +13,7 @@ $dataBr = fn(?string $d): string => $d ? date('d/m/Y', strtotime($d)) : '—';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?= htmlspecialchars(\Core\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>">
     <title>Recorrências</title>
     <link rel="stylesheet" href="./index.css">
 </head>

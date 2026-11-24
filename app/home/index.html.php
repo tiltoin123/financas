@@ -11,6 +11,7 @@ $h = fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?= htmlspecialchars(\Core\Csrf::token(), ENT_QUOTES, 'UTF-8') ?>">
     <title>Painel</title>
     <link rel="stylesheet" href="./index.css">
 </head>
